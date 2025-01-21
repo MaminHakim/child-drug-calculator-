@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .react-select-container .react-select__control {
+    @apply bg-slate-50 border-0 rounded-lg shadow-sm;
+  }
+  
+  .react-select-container .react-select__multi-value {
+    @apply bg-blue-100 rounded-lg px-2 py-1; /* استفاده از رنگ استاندارد blue */
+  }
+  
+  .react-select-container .react-select__multi-value__label {
+    @apply text-blue-800 text-sm;
+  }
+  
+  .react-select-container .react-select__placeholder {
+    @apply text-slate-400;
+  }
+}
