@@ -1,107 +1,58 @@
 [
   {
-    "id": "1",
-    "name": "آموکسی سیلین",
-    "dosagePerKg": 50,
-    "concentration": 25,
-    "indication": "عفونت گوش میانی، عفونت تنفسی، عفونت ادراری"
-  },
-  {
-    "id": "2",
-    "name": "ایبوپروفن",
-    "dosagePerKg": 10,
-    "concentration": 20,
-    "indication": "تب، درد دندان، سردرد"
-  },
-  {
-    "id": "3",
+    "id": "paracetamol",
     "name": "استامینوفن",
     "dosagePerKg": 15,
-    "concentration": 24,
-    "indication": "تب، درد خفیف تا متوسط"
+    "concentration": 120,
+    "indication": "تب و درد",
+    "usageTime": "هر ۶ ساعت"
   },
   {
-    "id": "4",
-    "name": "سفالکسین",
-    "dosagePerKg": 25,
-    "concentration": 50,
-    "indication": "عفونت پوستی، عفونت تنفسی"
+    "id": "amoxicillin",
+    "name": "آموکسی‌سیلین",
+    "dosagePerKg": 50,
+    "concentration": 250,
+    "indication": "عفونت‌های باکتریایی",
+    "usageTime": "هر ۸ ساعت"
   },
   {
-    "id": "5",
-    "name": "آزیترومایسین",
+    "id": "ibuprofen",
+    "name": "ایبوپروفن",
     "dosagePerKg": 10,
-    "concentration": 20,
-    "indication": "عفونت گوش، عفونت سینوس"
+    "concentration": 100,
+    "indication": "تب و التهاب",
+    "usageTime": "هر ۸ ساعت"
   },
   {
-    "id": "6",
-    "name": "داکسیلامین",
-    "dosagePerKg": 1,
-    "concentration": 1.25,
-    "indication": "آلرژی فصلی، کهیر"
+    "id": "cefixime",
+    "name": "سفیکسیم",
+    "dosagePerKg": 8,
+    "concentration": 100,
+    "indication": "عفونت‌های تنفسی و ادراری",
+    "usageTime": "هر ۱۲ ساعت"
   },
   {
-    "id": "7",
-    "name": "سیپروهپتادین",
-    "dosagePerKg": 0.25,
-    "concentration": 0.4,
-    "indication": "اشتها آور، آلرژی"
-  },
-  {
-    "id": "8",
-    "name": "فاموتیدین",
-    "dosagePerKg": 0.5,
-    "concentration": 1,
-    "indication": "رفلاکس معده، زخم معده"
-  },
-  {
-    "id": "9",
-    "name": "پسیودوافدرین",
-    "dosagePerKg": 4,
-    "concentration": 3,
-    "indication": "احتقان بینی، سرماخوردگی"
-  },
-  {
-    "id": "10",
-    "name": "سالبوتامول",
+    "id": "ondansetron",
+    "name": "اندانسترون",
     "dosagePerKg": 0.15,
-    "concentration": 0.5,
-    "indication": "آسم، برونکواسپاسم"
+    "concentration": 4,
+    "indication": "تهوع و استفراغ",
+    "usageTime": "هر ۸ ساعت"
   },
   {
-    "id": "11",
-    "name": "کلرفنیرامین",
-    "dosagePerKg": 0.35,
-    "concentration": 0.5,
-    "indication": "آلرژی، کهیر"
+    "id": "دیفن",
+    "name": "دیفن",
+    "dosagePerKg": 23,
+    "concentration": 12,
+    "indication": "خواب آلودگی",
+    "usageTime": "هر ۱۲ ساعت"
   },
   {
-    "id": "12",
-    "name": "مترونیدازول",
-    "dosagePerKg": 7.5,
-    "concentration": 5,
-    "indication": "عفونت های انگلی، عفونت های باکتریایی"
-  },
-  {
-    "id": "13",
-    "name": "فنی توئین",
-    "dosagePerKg": 5,
-    "concentration": 10,
-    "indication": "صرع، تشنج"
-  },
-  {
-    "id": "14",
-    "name": "هیدروکسی زین",
-    "dosagePerKg": 0.5,
-    "concentration": 1,
-    "indication": "اضطراب، بی خوابی"
-  },
-  {
-    "id": "15",
-    "name": "رانیتیدین",
-    "dosagePerKg": 2,
-    "concentration": 3,
-    "indication": "رفلاکس معده، زخم معده"
+    "id": "پنادول",
+    "name": "پنادول",
+    "dosagePerKg": 12,
+    "concentration": 13,
+    "indication": "سرماخوردگی",
+    "usageTime": "هر ۹ ساعت یکبار"
   }
 ]

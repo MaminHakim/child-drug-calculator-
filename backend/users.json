@@ -1,0 +1,14 @@
+[
+  {
+    "username": "admin",
+    "password": "$2a$12$sJgmUPPMc7LvnKHBdFRjcuBrF5nOhfnwChWid.ohvsR8QYAyjbvJi",
+    "fullName": "ادمین",
+    "role": "admin"
+  },
+  {
+    "username": "hakim",
+    "password": "$2a$10$X1b8Fj5q1HgS/sKv6uCGL.bQgwfQ2o23fSTJVYQaQtYiLtXYUHZY.",
+    "fullName": "امین حکیم",
+    "role": "admin"
+  }
+]

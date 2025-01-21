@@ -1,154 +1,176 @@
 import { useState, useEffect } from 'react';
-import Select from 'react-select';
+import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiAlertCircle, FiDroplet } from 'react-icons/fi';
+import { jwtDecode } from 'jwt-decode';
+import { FiDroplet, FiPlus, FiUser, FiLogIn, FiLogOut, FiChevronDown, FiActivity } from 'react-icons/fi';
+import { FaCalculator } from 'react-icons/fa';
+
+// Import components
+import Login from './components/Login';
+import DrugManagement from './components/DrugManagement';
+import UserManagement from './components/UserManagement';
+import DoseCalculator from './components/DoseCalculator';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
-  const [weight, setWeight] = useState('');
-  const [selectedDrugs, setSelectedDrugs] = useState([]);
-  const [drugOptions, setDrugOptions] = useState([]);
-  const [results, setResults] = useState({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [userFullName, setUserFullName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDrugs = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
       try {
-        const { data } = await axios.get('http://74.243.209.111:8080/api/drugs');
-        setDrugOptions(data.map(drug => ({
-          value: drug.id,
-          label: drug.name,
-          indication: drug.indication || 'بدون مورد مصرف مشخص'
-        })));
-        setLoading(false);
-      } catch (err) {
-        setError('خطا در دریافت اطلاعات داروها');
-        setLoading(false);
+        const decodedToken = jwtDecode(token);
+        setIsLoggedIn(true);
+        setUserRole(decodedToken.role);
+        setUserFullName(decodedToken.fullName || 'کاربر مهمان');
+      } catch (error) {
+        console.error('خطا در پردازش توکن:', error);
+        handleLogout();
       }
-    };
+    } else {
+      navigate('/login');
+    }
+    setLoading(false);
+  }, [navigate]);
 
-    fetchDrugs();
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setUserFullName('');
+    setIsDropdownOpen(false); // ریست کردن منوی آبشاری
+    navigate('/login');
+  };
 
-  useEffect(() => {
-    const calculateDose = async () => {
-      if (weight > 0 && selectedDrugs.length > 0) {
-        try {
-          const { data } = await axios.post('http://74.243.209.111:8080/api/calculate', {
-            weight: parseFloat(weight),
-            drugIds: selectedDrugs.map(d => d.value)
-          });
-          setResults(data);
-        } catch (err) {
-          console.error('خطای محاسبه:', err);
-          setResults({});
-        }
-      } else {
-        setResults({});
-      }
-    };
+  const handleLogin = (token) => {
+    localStorage.setItem('token', token);
+    const decodedToken = jwtDecode(token);
+    setIsLoggedIn(true);
+    setUserRole(decodedToken.role);
+    setUserFullName(decodedToken.fullName || 'کاربر مهمان');
+    setIsDropdownOpen(false); // ریست کردن منوی آبشاری
+    navigate('/');
+  };
 
-    calculateDose();
-  }, [weight, selectedDrugs]);
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="text-red-600 text-center">
-          <FiAlertCircle className="w-12 h-12 mx-auto mb-4" />
-          <p className="text-lg">{error}</p>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div className="text-center p-8">در حال بارگذاری...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 mb-3">
-            <FiDroplet className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-800">محاسبه دارو کودکان</h1>
-          </div>
-        </div>
-
-        {/* Weight Input */}
-        <div className="bg-white rounded-xl p-4 shadow-sm mb-4 border border-slate-200">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            وزن کودک (کیلوگرم)
-          </label>
-          <input
-            type="number"
-            value={weight}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
-                setWeight(value);
-              }
-            }}
-            className="w-full p-3 bg-slate-50 rounded-lg focus:ring-2 focus:ring-blue-500 border-0"
-            placeholder="مثال: ۱۲٫۵"
-            inputMode="decimal"
-            min="0"
-          />
-        </div>
-
-        {/* Drug Selector */}
-        <div className="bg-white rounded-xl p-4 shadow-sm mb-4 border border-slate-200">
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            انتخاب داروها
-          </label>
-          <Select
-            isMulti
-            options={drugOptions}
-            value={selectedDrugs}
-            onChange={setSelectedDrugs}
-            placeholder="جستجو و انتخاب دارو..."
-            noOptionsMessage={() => "دارویی یافت نشد"}
-            isLoading={loading}
-            className="react-select-container"
-            classNamePrefix="react-select"
-            formatOptionLabel={drug => (
-              <div>
-                <div className="text-sm">{drug.label}</div>
-                <div className="text-xs text-gray-400">{drug.indication}</div>
-              </div>
-            )}
-            styles={{
-              control: (base) => ({
-                ...base,
-                border: 0,
-                boxShadow: 'none',
-                minHeight: '48px',
-                backgroundColor: '#f8fafc'
-              })
-            }}
-          />
-        </div>
-
-        {/* Results */}
-        {Object.entries(results).length > 0 && (
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-            <div className="flex items-center gap-2 mb-4">
-              <FiAlertCircle className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-slate-800">نتایج محاسبه</h2>
-            </div>
-            
-            <div className="space-y-3">
-              {Object.entries(results).map(([drug, dose]) => (
-                <div key={drug} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <span className="text-sm font-medium text-slate-600">{drug}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-blue-600">{dose.toFixed(2)}</span>
-                    <span className="text-slate-400 text-sm">سی‌سی</span>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-slate-50 p-4">
+        {/* نوار ناوبری */}
+        <nav className="bg-white shadow-md backdrop-blur-sm border-b border-slate-100">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              {/* سمت راست - لوگو و لینک‌ها */}
+              <div className="flex items-center gap-8">
+                <Link 
+                  to="/" 
+                  className="flex items-center gap-2 group"
+                >
+                  {/* آیکون ترکیبی */}
+                  <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-blue-500 rounded-full group-hover:rotate-12 transition-transform">
+                    <FiDroplet className="w-5 h-5 text-white absolute top-2 left-2" />
+                    <FaCalculator className="w-5 h-5 text-white absolute bottom-2 right-2" />
                   </div>
-                </div>
-              ))}
+                </Link>
+                
+                {isLoggedIn && userRole === 'admin' && (
+                  <div className="hidden md:flex items-center gap-4 ml-6">
+                    <Link
+                      to="/drugs"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg transition-all hover:bg-indigo-50"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      مدیریت داروها
+                    </Link>
+                    <Link
+                      to="/users"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg transition-all hover:bg-indigo-50"
+                    >
+                      <FiUser className="w-4 h-4" />
+                      مدیریت کاربران
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* سمت چپ - بخش کاربر */}
+              <div className="flex items-center gap-4">
+                {isLoggedIn ? (
+                  <div className="relative">
+                    {/* دکمه باز کردن منوی آبشاری */}
+                    <button
+                      onClick={toggleDropdown}
+                      className="flex items-center gap-3 group focus:outline-none"
+                    >
+                      <div className="flex items-center gap-3 px-4 py-2 rounded-full transition-colors cursor-default bg-white border border-gray-200 hover:border-indigo-200">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600">
+                          <FiUser className="w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-medium text-gray-900">{userFullName}</span>
+                          <span className="text-xs font-light text-gray-500">{userRole}</span>
+                        </div>
+                        <FiChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      </div>
+                    </button>
+
+                    {/* منوی آبشاری */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <FiLogOut className="w-5 h-5" />
+                          خروج
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                  >
+                    <FiLogIn className="w-5 h-5" />
+                    ورود به سیستم
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
-        )}
+        </nav>
+
+        {/* مسیرها */}
+        <Routes>
+          <Route 
+            path="/login" 
+            element={
+              <Login 
+                setIsLoggedIn={setIsLoggedIn} 
+                setUserRole={setUserRole} 
+                setUserFullName={setUserFullName} 
+                handleLogin={handleLogin} // ارسال تابع handleLogin به کامپوننت Login
+              />
+            } 
+          />
+          <Route path="/drugs" element={<DrugManagement userRole={userRole} />} />
+          <Route path="/users" element={<UserManagement userRole={userRole} />} />
+          <Route path="/" element={<DoseCalculator isLoggedIn={isLoggedIn} userRole={userRole} />} />
+        </Routes>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
