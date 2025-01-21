@@ -14,7 +14,7 @@ export default function App() {
   useEffect(() => {
     const fetchDrugs = async () => {
       try {
-        const { data } = await axios.get('http://localhost:8080/api/drugs');
+        const { data } = await axios.get('http://74.243.209.111/:8080/api/drugs');
         setDrugOptions(data.map(drug => ({
           value: drug.id,
           label: drug.name,
@@ -34,7 +34,7 @@ export default function App() {
     const calculateDose = async () => {
       if (weight > 0 && selectedDrugs.length > 0) {
         try {
-          const { data } = await axios.post('http://localhost:8080/api/calculate', {
+          const { data } = await axios.post('http://74.243.209.111/:8080/api/calculate', {
             weight: parseFloat(weight),
             drugIds: selectedDrugs.map(d => d.value)
           });
