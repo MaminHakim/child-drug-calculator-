@@ -11,6 +11,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedDosage, setSelectedDosage] = useState({}); // State جدید برای دوزهای انتخاب‌شده
 
   // Fetch drugs from the server
   useEffect(() => {
@@ -24,10 +25,11 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
           data.map((drug) => ({
             value: drug.id,
             label: drug.name,
-            dosagePerKg: drug.dosagePerKg,
+            dosages: drug.dosages, // دوزهای ممکن برای دارو
             concentration: drug.concentration,
             indication: drug.indication || 'بدون مورد مصرف مشخص',
             usageTime: drug.usageTime || 'بدون زمان مصرف مشخص',
+            dosesPerDay: drug.dosesPerDay, // تعداد نوبت‌های مصرف در شبانه‌روز
           }))
         );
         setLoading(false);
@@ -45,7 +47,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
     }
   }, [isLoggedIn]);
 
-  // Calculate dose when weight or selected drugs change
+  // Calculate dose when weight, selected drugs, or selected dosage changes
   useEffect(() => {
     const calculateDose = async () => {
       if (weight > 0 && selectedDrugs.length > 0) {
@@ -55,6 +57,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
             {
               weight: parseFloat(weight),
               drugIds: selectedDrugs.map((d) => d.value),
+              dosages: selectedDosage, // ارسال دوزهای انتخاب‌شده
             },
             {
               headers: { Authorization: token },
@@ -76,7 +79,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
     if (isLoggedIn) {
       calculateDose();
     }
-  }, [weight, selectedDrugs, isLoggedIn]);
+  }, [weight, selectedDrugs, selectedDosage, isLoggedIn]);
 
   if (error) {
     return (
@@ -133,7 +136,15 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
               isMulti
               options={drugOptions}
               value={selectedDrugs}
-              onChange={setSelectedDrugs}
+              onChange={(selected) => {
+                setSelectedDrugs(selected);
+                // تنظیم دوز پیش‌فرض برای هر دارو
+                const dosageMap = {};
+                selected.forEach((drug) => {
+                  dosageMap[drug.value] = drug.dosages[0]; // دوز پیش‌فرض: اولین مقدار از دوزهای ممکن
+                });
+                setSelectedDosage(dosageMap);
+              }}
               placeholder="جستجو و انتخاب دارو..."
               noOptionsMessage={() => 'دارویی یافت نشد'}
               isLoading={loading}
@@ -170,15 +181,44 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
             </div>
 
             <div className="space-y-3">
-              {Object.entries(results).map(([drug, details]) => (
-                <div key={drug} className="flex flex-col p-3 bg-slate-50 rounded-lg">
-                  <span className="text-sm font-medium text-slate-600">{drug}</span>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-blue-600">{details.dose} سی‌سی</span>
-                    <span className="text-slate-400 text-sm">{details.usageTime}</span>
+              {Object.entries(results).map(([drug, details]) => {
+                const drugInfo = drugOptions.find((d) => d.label === drug);
+                return (
+                  <div key={drug} className="flex flex-col p-3 bg-slate-50 rounded-lg">
+                    <span className="text-sm font-medium text-slate-600">{drug}</span>
+                    <div className="mt-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        انتخاب دوز (میلی‌گرم به ازای هر کیلوگرم)
+                      </label>
+                      <select
+                        value={selectedDosage[drugInfo.value] || drugInfo.dosages[0]}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          setSelectedDosage((prev) => ({
+                            ...prev,
+                            [drugInfo.value]: value,
+                          }));
+                        }}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        {drugInfo.dosages.map((dosage, index) => (
+                          <option key={index} value={dosage}>
+                            {dosage} میلی‌گرم
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="font-bold text-blue-600">{details.totalDose} سی‌سی</span>
+                      <span className="text-slate-400 text-sm">{details.usageTime}</span>
+                      <span className="text-slate-400 text-sm">نوبت {details.dosesPerDay}</span>
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-sm text-gray-600">دوز هر نوبت: {details.dosePerDose} سی‌سی</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

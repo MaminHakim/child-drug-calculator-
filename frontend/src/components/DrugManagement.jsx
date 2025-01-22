@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiPlus, FiEdit, FiTrash } from 'react-icons/fi';
-import Swal from 'sweetalert2'; // برای نمایش پیام‌های زیبا
-import { API_BASE_URL } from '../config'; // استفاده از API_BASE_URL
-import { useNavigate } from 'react-router-dom'; // برای هدایت کاربر به صفحه لاگین
+import Swal from 'sweetalert2';
+import { API_BASE_URL } from '../config';
+import { useNavigate } from 'react-router-dom';
 
 export default function DrugManagement({ userRole }) {
   const [drugs, setDrugs] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newDrug, setNewDrug] = useState({
     name: '',
-    dosagePerKg: '',
+    dosages: [10, 15, 20], // دوزهای ممکن برای دارو
     concentration: '',
     indication: '',
     usageTime: '',
+    dosesPerDay: 3, // تعداد نوبت‌های مصرف در شبانه‌روز
   });
   const [editingDrug, setEditingDrug] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // برای نمایش اسپینر
-  const navigate = useNavigate(); // برای هدایت کاربر به صفحه لاگین
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDrugs();
@@ -27,7 +28,7 @@ export default function DrugManagement({ userRole }) {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/login'); // اگر توکن وجود ندارد، کاربر را به صفحه لاگین هدایت کنید
+        navigate('/login');
         return;
       }
       const { data } = await axios.get(`${API_BASE_URL}/api/drugs`, {
@@ -42,22 +43,23 @@ export default function DrugManagement({ userRole }) {
 
   const handleAddDrug = async (e) => {
     e.preventDefault();
-    if (!newDrug.name || !newDrug.dosagePerKg || !newDrug.concentration) {
+    if (!newDrug.name || !newDrug.dosages || !newDrug.concentration || !newDrug.dosesPerDay) {
       Swal.fire('خطا!', 'لطفاً فیلدهای اجباری را پر کنید.', 'error');
       return;
     }
 
     const payload = {
       ...newDrug,
-      dosagePerKg: parseFloat(newDrug.dosagePerKg), // تبدیل به عدد
-      concentration: parseFloat(newDrug.concentration), // تبدیل به عدد
+      dosages: newDrug.dosages.map(Number), // تبدیل به آرایه‌ی عددی
+      concentration: parseFloat(newDrug.concentration),
+      dosesPerDay: parseInt(newDrug.dosesPerDay),
     };
 
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/login'); // اگر توکن وجود ندارد، کاربر را به صفحه لاگین هدایت کنید
+        navigate('/login');
         return;
       }
       await axios.post(`${API_BASE_URL}/api/drugs`, payload, {
@@ -65,7 +67,14 @@ export default function DrugManagement({ userRole }) {
       });
       fetchDrugs();
       setShowAddForm(false);
-      setNewDrug({ name: '', dosagePerKg: '', concentration: '', indication: '', usageTime: '' });
+      setNewDrug({
+        name: '',
+        dosages: [10, 15, 20],
+        concentration: '',
+        indication: '',
+        usageTime: '',
+        dosesPerDay: 3,
+      });
       Swal.fire('موفقیت‌آمیز!', 'دارو با موفقیت اضافه شد.', 'success');
     } catch (err) {
       console.error('خطا در افزودن دارو:', err);
@@ -77,22 +86,23 @@ export default function DrugManagement({ userRole }) {
 
   const handleEditDrug = async (e) => {
     e.preventDefault();
-    if (!editingDrug.name || !editingDrug.dosagePerKg || !editingDrug.concentration) {
+    if (!editingDrug.name || !editingDrug.dosages || !editingDrug.concentration || !editingDrug.dosesPerDay) {
       Swal.fire('خطا!', 'لطفاً فیلدهای اجباری را پر کنید.', 'error');
       return;
     }
 
     const payload = {
       ...editingDrug,
-      dosagePerKg: parseFloat(editingDrug.dosagePerKg), // تبدیل به عدد
-      concentration: parseFloat(editingDrug.concentration), // تبدیل به عدد
+      dosages: editingDrug.dosages.map(Number), // تبدیل به آرایه‌ی عددی
+      concentration: parseFloat(editingDrug.concentration),
+      dosesPerDay: parseInt(editingDrug.dosesPerDay),
     };
 
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        navigate('/login'); // اگر توکن وجود ندارد، کاربر را به صفحه لاگین هدایت کنید
+        navigate('/login');
         return;
       }
       await axios.put(`${API_BASE_URL}/api/drugs/${editingDrug.id}`, payload, {
@@ -126,7 +136,7 @@ export default function DrugManagement({ userRole }) {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          navigate('/login'); // اگر توکن وجود ندارد، کاربر را به صفحه لاگین هدایت کنید
+          navigate('/login');
           return;
         }
         await axios.delete(`${API_BASE_URL}/api/drugs/${drugId}`, {
@@ -141,6 +151,11 @@ export default function DrugManagement({ userRole }) {
         setIsLoading(false);
       }
     }
+  };
+
+  // تابع برای نمایش مقادیر اعشاری تا یک رقم (بدون رند کردن)
+  const formatDecimal = (value) => {
+    return parseFloat(value).toFixed(1);
   };
 
   return (
@@ -168,10 +183,10 @@ export default function DrugManagement({ userRole }) {
               required
             />
             <input
-              type="number"
-              value={newDrug.dosagePerKg}
-              onChange={(e) => setNewDrug({ ...newDrug, dosagePerKg: e.target.value })}
-              placeholder="دوز بر حسب کیلوگرم"
+              type="text"
+              value={newDrug.dosages.join(', ')}
+              onChange={(e) => setNewDrug({ ...newDrug, dosages: e.target.value.split(',').map(Number) })}
+              placeholder="دوزهای ممکن (مثلاً 10, 15, 20)"
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -180,6 +195,14 @@ export default function DrugManagement({ userRole }) {
               value={newDrug.concentration}
               onChange={(e) => setNewDrug({ ...newDrug, concentration: e.target.value })}
               placeholder="غلظت دارو"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <input
+              type="number"
+              value={newDrug.dosesPerDay}
+              onChange={(e) => setNewDrug({ ...newDrug, dosesPerDay: e.target.value })}
+              placeholder="تعداد نوبت‌های مصرف در شبانه‌روز"
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -220,44 +243,70 @@ export default function DrugManagement({ userRole }) {
         <form onSubmit={handleEditDrug} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h2 className="text-xl font-bold mb-4">ویرایش دارو</h2>
           <div className="space-y-4">
-            <input
-              type="text"
-              value={editingDrug.name}
-              onChange={(e) => setEditingDrug({ ...editingDrug, name: e.target.value })}
-              placeholder="نام دارو"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="number"
-              value={editingDrug.dosagePerKg}
-              onChange={(e) => setEditingDrug({ ...editingDrug, dosagePerKg: e.target.value })}
-              placeholder="دوز بر حسب کیلوگرم"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="number"
-              value={editingDrug.concentration}
-              onChange={(e) => setEditingDrug({ ...editingDrug, concentration: e.target.value })}
-              placeholder="غلظت دارو"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="text"
-              value={editingDrug.indication}
-              onChange={(e) => setEditingDrug({ ...editingDrug, indication: e.target.value })}
-              placeholder="مورد مصرف"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              value={editingDrug.usageTime}
-              onChange={(e) => setEditingDrug({ ...editingDrug, usageTime: e.target.value })}
-              placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">نام دارو</label>
+              <input
+                type="text"
+                value={editingDrug.name}
+                onChange={(e) => setEditingDrug({ ...editingDrug, name: e.target.value })}
+                placeholder="نام دارو"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">دوزهای ممکن (میلی‌گرم)</label>
+              <input
+                type="text"
+                value={editingDrug.dosages.join(', ')}
+                onChange={(e) => setEditingDrug({ ...editingDrug, dosages: e.target.value.split(',').map(Number) })}
+                placeholder="دوزهای ممکن (مثلاً 10, 15, 20)"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">غلظت دارو (میلی‌گرم بر سی‌سی)</label>
+              <input
+                type="number"
+                value={editingDrug.concentration}
+                onChange={(e) => setEditingDrug({ ...editingDrug, concentration: e.target.value })}
+                placeholder="غلظت دارو"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">تعداد نوبت‌های مصرف در شبانه‌روز</label>
+              <input
+                type="number"
+                value={editingDrug.dosesPerDay}
+                onChange={(e) => setEditingDrug({ ...editingDrug, dosesPerDay: e.target.value })}
+                placeholder="تعداد نوبت‌های مصرف در شبانه‌روز"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">مورد مصرف</label>
+              <input
+                type="text"
+                value={editingDrug.indication}
+                onChange={(e) => setEditingDrug({ ...editingDrug, indication: e.target.value })}
+                placeholder="مورد مصرف"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">زمان مصرف</label>
+              <input
+                type="text"
+                value={editingDrug.usageTime}
+                onChange={(e) => setEditingDrug({ ...editingDrug, usageTime: e.target.value })}
+                placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
           <div className="mt-4">
             <button
@@ -284,6 +333,9 @@ export default function DrugManagement({ userRole }) {
             <div key={drug.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg">
               <div>
                 <div className="text-sm font-medium">{drug.name}</div>
+                <div className="text-xs text-gray-400">
+                  دوزهای ممکن: {drug.dosages.map((dose) => formatDecimal(dose)).join(', ')} میلی‌گرم
+                </div>
                 <div className="text-xs text-gray-400">{drug.indication}</div>
                 <div className="text-xs text-gray-400">{drug.usageTime}</div>
               </div>
