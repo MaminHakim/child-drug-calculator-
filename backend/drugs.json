@@ -54,5 +54,13 @@
     "concentration": 13,
     "indication": "سرماخوردگی",
     "usageTime": "هر ۹ ساعت یکبار"
+  },
+  {
+    "id": "آموکسی-کلاو",
+    "name": "آموکسی کلاو",
+    "dosagePerKg": 70,
+    "concentration": 643,
+    "indication": "عفونت",
+    "usageTime": "هر ۱۲ ساعت"
   }
 ]

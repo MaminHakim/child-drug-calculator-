@@ -10,6 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -259,9 +260,20 @@ func calculateDose(w http.ResponseWriter, r *http.Request) {
 	for _, drugID := range req.DrugIDs {
 		for _, drug := range drugs {
 			if drug.ID == drugID {
-				dose := (req.Weight * drug.DosagePerKg) / drug.Concentration
+				// تبدیل مقادیر به decimal برای محاسبات دقیق
+				weight := decimal.NewFromFloat(req.Weight)
+				dosagePerKg := decimal.NewFromFloat(drug.DosagePerKg)
+				concentration := decimal.NewFromFloat(drug.Concentration)
+
+				// انجام محاسبات با دقت بالا
+				dose := weight.Mul(dosagePerKg).Mul(decimal.NewFromFloat(5)).Div(concentration)
+
+				// گرد کردن نتیجه به دو رقم اعشار
+				doseRounded := dose.Round(0)
+
+				// ذخیره نتیجه
 				results[drug.Name] = map[string]interface{}{
-					"dose":      dose,
+					"dose":      doseRounded.String(), // تبدیل به رشته برای جلوگیری از خطاهای نمایش
 					"usageTime": drug.UsageTime,
 				}
 				break
