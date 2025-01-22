@@ -10,18 +10,18 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
-	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // ساختارهای داده‌ای
 type Drug struct {
-	ID            string  `json:"id"`
-	Name          string  `json:"name"`
-	DosagePerKg   float64 `json:"dosagePerKg"`
-	Concentration float64 `json:"concentration"`
-	Indication    string  `json:"indication"`
-	UsageTime     string  `json:"usageTime"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	Dosages       []float64 `json:"dosages"` // دوزهای ممکن برای دارو
+	Concentration float64   `json:"concentration"`
+	Indication    string    `json:"indication"`
+	UsageTime     string    `json:"usageTime"`
+	DosesPerDay   int       `json:"dosesPerDay"` // تعداد نوبت‌های مصرف در شبانه‌روز
 }
 
 type User struct {
@@ -32,25 +32,28 @@ type User struct {
 }
 
 type CalculationRequest struct {
-	Weight  float64  `json:"weight"`
-	DrugIDs []string `json:"drugIds"`
+	Weight  float64            `json:"weight"`
+	DrugIDs []string           `json:"drugIds"`
+	Dosages map[string]float64 `json:"dosages"` // دوزهای انتخاب‌شده توسط کاربر
 }
 
 type AddDrugRequest struct {
-	Name          string  `json:"name"`
-	DosagePerKg   float64 `json:"dosagePerKg"`
-	Concentration float64 `json:"concentration"`
-	Indication    string  `json:"indication"`
-	UsageTime     string  `json:"usageTime"`
+	Name          string    `json:"name"`
+	Dosages       []float64 `json:"dosages"` // دوزهای ممکن برای دارو
+	Concentration float64   `json:"concentration"`
+	Indication    string    `json:"indication"`
+	UsageTime     string    `json:"usageTime"`
+	DosesPerDay   int       `json:"dosesPerDay"` // تعداد نوبت‌های مصرف در شبانه‌روز
 }
 
 type EditDrugRequest struct {
-	ID            string  `json:"id"`
-	Name          string  `json:"name"`
-	DosagePerKg   float64 `json:"dosagePerKg"`
-	Concentration float64 `json:"concentration"`
-	Indication    string  `json:"indication"`
-	UsageTime     string  `json:"usageTime"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	Dosages       []float64 `json:"dosages"` // دوزهای ممکن برای دارو
+	Concentration float64   `json:"concentration"`
+	Indication    string    `json:"indication"`
+	UsageTime     string    `json:"usageTime"`
+	DosesPerDay   int       `json:"dosesPerDay"` // تعداد نوبت‌های مصرف در شبانه‌روز
 }
 
 type AddUserRequest struct {
@@ -91,7 +94,7 @@ func main() {
 
 	// پیکربندی CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://74.243.209.111"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -99,11 +102,11 @@ func main() {
 
 	handler := c.Handler(r)
 
-	log.Println("سرور روی پورت 8080 راه‌اندازی شد")
+	log.Println("Server Running on 8080")
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
-// توایع مرتبط با داروها
+// توابع مرتبط با داروها
 func loadDrugs() {
 	file, err := os.Open("drugs.json")
 	if err != nil {
@@ -260,21 +263,26 @@ func calculateDose(w http.ResponseWriter, r *http.Request) {
 	for _, drugID := range req.DrugIDs {
 		for _, drug := range drugs {
 			if drug.ID == drugID {
-				// تبدیل مقادیر به decimal برای محاسبات دقیق
-				weight := decimal.NewFromFloat(req.Weight)
-				dosagePerKg := decimal.NewFromFloat(drug.DosagePerKg)
-				concentration := decimal.NewFromFloat(drug.Concentration)
+				// استفاده از دوز انتخاب‌شده توسط کاربر
+				selectedDosage := req.Dosages[drugID]
 
-				// انجام محاسبات با دقت بالا
-				dose := weight.Mul(dosagePerKg).Mul(decimal.NewFromFloat(5)).Div(concentration)
+				// محاسبه دوز کلی
+				totalDose := (req.Weight * selectedDosage * 5) / drug.Concentration
 
-				// گرد کردن نتیجه به دو رقم اعشار
-				doseRounded := dose.Round(0)
+				// رند کردن دوز کلی به عدد صحیح
+				totalDoseRounded := int(totalDose + 0.5)
 
-				// ذخیره نتیجه
+				// محاسبه دوز هر نوبت
+				dosePerDose := totalDose / float64(drug.DosesPerDay)
+
+				// رند کردن دوز هر نوبت به عدد صحیح
+				dosePerDoseRounded := int(dosePerDose + 0.5)
+
 				results[drug.Name] = map[string]interface{}{
-					"dose":      doseRounded.String(), // تبدیل به رشته برای جلوگیری از خطاهای نمایش
-					"usageTime": drug.UsageTime,
+					"totalDose":   totalDoseRounded,   // دوز کلی (رند شده)
+					"dosePerDose": dosePerDoseRounded, // دوز هر نوبت (رند شده)
+					"usageTime":   drug.UsageTime,
+					"dosesPerDay": drug.DosesPerDay,
 				}
 				break
 			}
@@ -295,10 +303,11 @@ func addDrug(w http.ResponseWriter, r *http.Request) {
 	newDrug := Drug{
 		ID:            strings.ToLower(strings.ReplaceAll(req.Name, " ", "-")),
 		Name:          req.Name,
-		DosagePerKg:   req.DosagePerKg,
+		Dosages:       req.Dosages, // دوزهای چندگانه
 		Concentration: req.Concentration,
 		Indication:    req.Indication,
 		UsageTime:     req.UsageTime,
+		DosesPerDay:   req.DosesPerDay,
 	}
 
 	drugs = append(drugs, newDrug)
@@ -320,10 +329,11 @@ func editDrug(w http.ResponseWriter, r *http.Request) {
 			drugs[i] = Drug{
 				ID:            req.ID,
 				Name:          req.Name,
-				DosagePerKg:   req.DosagePerKg,
+				Dosages:       req.Dosages, // دوزهای چندگانه
 				Concentration: req.Concentration,
 				Indication:    req.Indication,
 				UsageTime:     req.UsageTime,
+				DosesPerDay:   req.DosesPerDay,
 			}
 			saveDrugs()
 			w.Header().Set("Content-Type", "application/json")
@@ -422,8 +432,6 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "کاربر یافت نشد", http.StatusNotFound)
 }
-
-// reset password for user
 
 func resetPassword(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

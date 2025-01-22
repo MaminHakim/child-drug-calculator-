@@ -1,66 +1,42 @@
 [
   {
     "id": "paracetamol",
-    "name": "استامینوفن",
-    "dosagePerKg": 15,
+    "name": "Paracetamol",
+    "dosages": [
+      10,
+      15,
+      20
+    ],
     "concentration": 120,
-    "indication": "تب و درد",
-    "usageTime": "هر ۶ ساعت"
+    "indication": "تب‌بر و مسکن",
+    "usageTime": "هر ۶ ساعت",
+    "dosesPerDay": 4
   },
   {
     "id": "amoxicillin",
-    "name": "آموکسی‌سیلین",
-    "dosagePerKg": 50,
+    "name": "Amoxicillin",
+    "dosages": [
+      20,
+      40,
+      60
+    ],
     "concentration": 250,
-    "indication": "عفونت‌های باکتریایی",
-    "usageTime": "هر ۸ ساعت"
+    "indication": "آنتی‌بیوتیک",
+    "usageTime": "هر ۸ ساعت",
+    "dosesPerDay": 3
   },
   {
-    "id": "ibuprofen",
-    "name": "ایبوپروفن",
-    "dosagePerKg": 10,
-    "concentration": 100,
-    "indication": "تب و التهاب",
-    "usageTime": "هر ۸ ساعت"
-  },
-  {
-    "id": "cefixime",
-    "name": "سفیکسیم",
-    "dosagePerKg": 8,
-    "concentration": 100,
-    "indication": "عفونت‌های تنفسی و ادراری",
-    "usageTime": "هر ۱۲ ساعت"
-  },
-  {
-    "id": "ondansetron",
-    "name": "اندانسترون",
-    "dosagePerKg": 0.15,
-    "concentration": 4,
-    "indication": "تهوع و استفراغ",
-    "usageTime": "هر ۸ ساعت"
-  },
-  {
-    "id": "دیفن",
-    "name": "دیفن",
-    "dosagePerKg": 23,
-    "concentration": 12,
-    "indication": "خواب آلودگی",
-    "usageTime": "هر ۱۲ ساعت"
-  },
-  {
-    "id": "پنادول",
-    "name": "پنادول",
-    "dosagePerKg": 12,
-    "concentration": 13,
-    "indication": "سرماخوردگی",
-    "usageTime": "هر ۹ ساعت یکبار"
-  },
-  {
-    "id": "آموکسی-کلاو",
-    "name": "آموکسی کلاو",
-    "dosagePerKg": 70,
-    "concentration": 643,
-    "indication": "عفونت",
-    "usageTime": "هر ۱۲ ساعت"
+    "id": "آموکسی-سیلین-۶۳۴",
+    "name": "آموکسی سیلین ۶۳۴",
+    "dosages": [
+      70,
+      80,
+      90,
+      100
+    ],
+    "concentration": 629,
+    "indication": "آنتی بیوتیک",
+    "usageTime": "هر ۶ ساعت یکبار",
+    "dosesPerDay": 3
   }
 ]
