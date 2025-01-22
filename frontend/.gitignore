@@ -39,4 +39,4 @@ coverage/
 
 # فایل‌های موقت
 tmp/
-temp/
+temp/node_modules/
