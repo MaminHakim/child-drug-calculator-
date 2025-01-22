@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'; // اضافه کردن useRef
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -18,6 +18,7 @@ export default function App() {
   const [userFullName, setUserFullName] = useState('');
   const [loading, setLoading] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // حالت منوی موبایل
   const navigate = useNavigate();
 
   // استفاده از useRef برای ذخیره‌ی مرجع به منوی آبشاری
@@ -49,10 +50,7 @@ export default function App() {
       }
     };
 
-    // اضافه کردن event listener به document
     document.addEventListener('click', handleClickOutside);
-
-    // حذف event listener هنگام unmount کامپوننت
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
@@ -81,6 +79,10 @@ export default function App() {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   if (loading) {
     return <div className="text-center p-8">در حال بارگذاری...</div>;
   }
@@ -94,16 +96,24 @@ export default function App() {
             <div className="flex items-center justify-between h-16">
               {/* سمت راست - لوگو و لینک‌ها */}
               <div className="flex items-center gap-8">
-                <Link 
-                  to="/" 
-                  className="flex items-center gap-2 group"
-                >
+                <Link to="/" className="flex items-center gap-2 group">
                   {/* آیکون ترکیبی */}
                   <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-blue-500 rounded-full group-hover:rotate-12 transition-transform">
-                    <FaCalculator className="w-5 h-5 text-white absolute " />
+                    <FaCalculator className="w-5 h-5 text-white absolute" />
                   </div>
                 </Link>
-                
+
+                {/* دکمه همبرگری برای موبایل */}
+                <button
+                  onClick={toggleMobileMenu}
+                  className="md:hidden flex items-center p-2 text-gray-600 hover:text-indigo-600 focus:outline-none"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                  </svg>
+                </button>
+
+                {/* لینک‌های نوار ناوبری (برای دسکتاپ) */}
                 {isLoggedIn && userRole === 'admin' && (
                   <div className="hidden md:flex items-center gap-4 ml-6">
                     <Link
@@ -111,14 +121,14 @@ export default function App() {
                       className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg transition-all hover:bg-indigo-50"
                     >
                       <FiPlus className="w-4 h-4" />
-                      مدیریت داروها
+                      داروها
                     </Link>
                     <Link
                       to="/users"
                       className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-lg transition-all hover:bg-indigo-50"
                     >
                       <FiUser className="w-4 h-4" />
-                      مدیریت کاربران
+                      کاربران
                     </Link>
                   </div>
                 )}
@@ -127,7 +137,7 @@ export default function App() {
               {/* سمت چپ - بخش کاربر */}
               <div className="flex items-center gap-4">
                 {isLoggedIn ? (
-                  <div className="relative" ref={dropdownRef}> {/* اضافه کردن ref به منوی آبشاری */}
+                  <div className="relative" ref={dropdownRef}>
                     {/* دکمه باز کردن منوی آبشاری */}
                     <button
                       onClick={toggleDropdown}
@@ -169,21 +179,45 @@ export default function App() {
                 )}
               </div>
             </div>
+
+            {/* منوی موبایل */}
+            {isMobileMenuOpen && (
+              <div className="md:hidden mt-4">
+                {isLoggedIn && userRole === 'admin' && (
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      to="/drugs"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 rounded-lg"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      داروها
+                    </Link>
+                    <Link
+                      to="/users"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 rounded-lg"
+                    >
+                      <FiUser className="w-4 h-4" />
+                      کاربران
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </nav>
 
         {/* مسیرها */}
         <Routes>
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
-              <Login 
-                setIsLoggedIn={setIsLoggedIn} 
-                setUserRole={setUserRole} 
-                setUserFullName={setUserFullName} 
-                handleLogin={handleLogin} // ارسال تابع handleLogin به کامپوننت Login
+              <Login
+                setIsLoggedIn={setIsLoggedIn}
+                setUserRole={setUserRole}
+                setUserFullName={setUserFullName}
+                handleLogin={handleLogin}
               />
-            } 
+            }
           />
           <Route path="/drugs" element={<DrugManagement userRole={userRole} />} />
           <Route path="/users" element={<UserManagement userRole={userRole} />} />

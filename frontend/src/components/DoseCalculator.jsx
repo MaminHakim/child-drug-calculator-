@@ -211,7 +211,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
                     <div className="flex items-center justify-between mt-2">
                       <span className="font-bold text-blue-600">{details.totalDose} سی‌سی</span>
                       <span className="text-slate-400 text-sm">{details.usageTime}</span>
-                      <span className="text-slate-400 text-sm">نوبت {details.dosesPerDay}</span>
+                      <span className="text-slate-400 text-sm">{details.dosesPerDay} نوبت</span>
                     </div>
                     <div className="mt-2">
                       <span className="text-sm text-gray-600">دوز هر نوبت: {details.dosePerDose} سی‌سی</span>
