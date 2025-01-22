@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { FiLock, FiX } from 'react-icons/fi';
+import { API_BASE_URL } from '../config';
 
 export default function ChangePasswordModal({ isOpen, onClose }) {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -29,7 +30,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
       }
 
       await axios.put(
-        'http://localhost:8080/api/users/change-password',
+        `${API_BASE_URL}/api/users/change-password`,
         { currentPassword, newPassword },
         { headers: { Authorization: token } }
       );

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FiAlertCircle, FiDroplet } from 'react-icons/fi';
 import Select from 'react-select';
+import { API_BASE_URL } from '../config';
 
 export default function DoseCalculator({ isLoggedIn, userRole }) {
   const [weight, setWeight] = useState('');
@@ -16,7 +17,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
     const fetchDrugs = async () => {
       try {
         const token = localStorage.getItem('token');
-        const { data } = await axios.get('http://localhost:8080/api/drugs', {
+        const { data } = await axios.get(`${API_BASE_URL}/api/drugs`, {
           headers: { Authorization: token },
         });
         setDrugOptions(
@@ -50,8 +51,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
       if (weight > 0 && selectedDrugs.length > 0) {
         try {
           const token = localStorage.getItem('token');
-          const { data } = await axios.post(
-            'http://localhost:8080/api/calculate',
+          const { data } = await axios.post(`${API_BASE_URL}/api/calculate`,
             {
               weight: parseFloat(weight),
               drugIds: selectedDrugs.map((d) => d.value),
@@ -174,7 +174,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
                 <div key={drug} className="flex flex-col p-3 bg-slate-50 rounded-lg">
                   <span className="text-sm font-medium text-slate-600">{drug}</span>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-blue-600">{details.dose.toFixed(2)} سی‌سی</span>
+                    <span className="font-bold text-blue-600">{details.dose} سی‌سی</span>
                     <span className="text-slate-400 text-sm">{details.usageTime}</span>
                   </div>
                 </div>
