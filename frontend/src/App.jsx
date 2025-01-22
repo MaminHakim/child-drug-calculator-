@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react'; // اضافه کردن useRef
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -20,6 +20,9 @@ export default function App() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
+  // استفاده از useRef برای ذخیره‌ی مرجع به منوی آبشاری
+  const dropdownRef = useRef(null);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -37,6 +40,23 @@ export default function App() {
     }
     setLoading(false);
   }, [navigate]);
+
+  // اضافه کردن event listener برای بستن منو با کلیک خارج از آن
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    // اضافه کردن event listener به document
+    document.addEventListener('click', handleClickOutside);
+
+    // حذف event listener هنگام unmount کامپوننت
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -80,8 +100,7 @@ export default function App() {
                 >
                   {/* آیکون ترکیبی */}
                   <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-blue-500 rounded-full group-hover:rotate-12 transition-transform">
-                    <FiDroplet className="w-5 h-5 text-white absolute top-2 left-2" />
-                    <FaCalculator className="w-5 h-5 text-white absolute bottom-2 right-2" />
+                    <FaCalculator className="w-5 h-5 text-white absolute " />
                   </div>
                 </Link>
                 
@@ -108,7 +127,7 @@ export default function App() {
               {/* سمت چپ - بخش کاربر */}
               <div className="flex items-center gap-4">
                 {isLoggedIn ? (
-                  <div className="relative">
+                  <div className="relative" ref={dropdownRef}> {/* اضافه کردن ref به منوی آبشاری */}
                     {/* دکمه باز کردن منوی آبشاری */}
                     <button
                       onClick={toggleDropdown}
