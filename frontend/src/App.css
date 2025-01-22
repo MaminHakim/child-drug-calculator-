@@ -1,3 +1,14 @@
+@font-face {
+  font-family: 'Shabnam';
+  src: url('./fonts/Shabnam-FD.ttf') format('truetype'),
+       url('./fonts/Shabnam-FD.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'Shabnam', sans-serif;
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -42,11 +53,13 @@
 }
 /* در فایل CSS اصلی */
 .react-select__control {
-  @apply bg-transparent border-0 !important;
+  background-color: transparent !important;
+  border: 0 !important;
 }
 .react-select__multi-value {
-  @apply bg-blue-100 rounded-lg !important;
+  background-color: #ebf8ff !important; /* equivalent to bg-blue-100 */
+  border-radius: 0.5rem !important; /* equivalent to rounded-lg */
 }
 .react-select__multi-value__label {
-  @apply text-blue-800 !important;
+  color: #2c5282 !important; /* equivalent to text-blue-800 */
 }

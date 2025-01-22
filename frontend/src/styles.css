@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Shabnam';
+  src: url('./fonts/Shabnam-FD.ttf') format('truetype'),
+       url('./fonts/Shabnam-FD.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+body {
+  font-family: 'Shabnam', sans-serif;
+}
+
 @layer components {
   .react-select-container .react-select__control {
     @apply bg-slate-50 border-0 rounded-lg shadow-sm;

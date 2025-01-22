@@ -5,6 +5,23 @@ import Swal from 'sweetalert2';
 import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 
+// تابع تبدیل اعداد فارسی به انگلیسی
+const convertToEnglishNumbers = (input) => {
+  const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+  const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+
+  let output = input;
+  for (let i = 0; i < 10; i++) {
+    output = output.replace(persianNumbers[i], i).replace(arabicNumbers[i], i);
+  }
+  return output;
+};
+
+// تابع نمایش اعداد به‌صورت یک رقم اعشار
+const formatDecimal = (value) => {
+  return parseFloat(value).toFixed(1); // نمایش یک رقم اعشار
+};
+
 export default function DrugManagement({ userRole }) {
   const [drugs, setDrugs] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -153,13 +170,8 @@ export default function DrugManagement({ userRole }) {
     }
   };
 
-  // تابع برای نمایش مقادیر اعشاری تا یک رقم (بدون رند کردن)
-  const formatDecimal = (value) => {
-    return parseFloat(value).toFixed(1);
-  };
-
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 font-shabnam">
       <h1 className="text-2xl font-bold mb-6">مدیریت داروها</h1>
       {userRole === 'admin' && (
         <button
@@ -174,52 +186,76 @@ export default function DrugManagement({ userRole }) {
         <form onSubmit={handleAddDrug} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h2 className="text-xl font-bold mb-4">افزودن دارو جدید</h2>
           <div className="space-y-4">
-            <input
-              type="text"
-              value={newDrug.name}
-              onChange={(e) => setNewDrug({ ...newDrug, name: e.target.value })}
-              placeholder="نام دارو"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="text"
-              value={newDrug.dosages.join(', ')}
-              onChange={(e) => setNewDrug({ ...newDrug, dosages: e.target.value.split(',').map(Number) })}
-              placeholder="دوزهای ممکن (مثلاً 10, 15, 20)"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="number"
-              value={newDrug.concentration}
-              onChange={(e) => setNewDrug({ ...newDrug, concentration: e.target.value })}
-              placeholder="غلظت دارو"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="number"
-              value={newDrug.dosesPerDay}
-              onChange={(e) => setNewDrug({ ...newDrug, dosesPerDay: e.target.value })}
-              placeholder="تعداد نوبت‌های مصرف در شبانه‌روز"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="text"
-              value={newDrug.indication}
-              onChange={(e) => setNewDrug({ ...newDrug, indication: e.target.value })}
-              placeholder="مورد مصرف"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              value={newDrug.usageTime}
-              onChange={(e) => setNewDrug({ ...newDrug, usageTime: e.target.value })}
-              placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">نام دارو</label>
+              <input
+                type="text"
+                value={newDrug.name}
+                onChange={(e) => setNewDrug({ ...newDrug, name: e.target.value })}
+                placeholder="نام دارو"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">دوزهای ممکن (میلی‌گرم)</label>
+              <input
+                type="text"
+                value={newDrug.dosages.join(', ')}
+                onChange={(e) => setNewDrug({ ...newDrug, dosages: e.target.value.split(',').map(Number) })}
+                placeholder="دوزهای ممکن (مثلاً 10, 15, 20)"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">غلظت دارو (میلی‌گرم بر سی‌سی)</label>
+              <input
+                type="text"
+                value={newDrug.concentration}
+                onChange={(e) => {
+                  const value = convertToEnglishNumbers(e.target.value); // تبدیل اعداد فارسی به انگلیسی
+                  setNewDrug({ ...newDrug, concentration: value });
+                }}
+                placeholder="غلظت دارو"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">تعداد نوبت‌های مصرف در شبانه‌روز</label>
+              <input
+                type="text"
+                value={newDrug.dosesPerDay}
+                onChange={(e) => {
+                  const value = convertToEnglishNumbers(e.target.value); // تبدیل اعداد فارسی به انگلیسی
+                  setNewDrug({ ...newDrug, dosesPerDay: value });
+                }}
+                placeholder="تعداد نوبت‌های مصرف در شبانه‌روز"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">مورد مصرف</label>
+              <input
+                type="text"
+                value={newDrug.indication}
+                onChange={(e) => setNewDrug({ ...newDrug, indication: e.target.value })}
+                placeholder="مورد مصرف"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">زمان مصرف</label>
+              <input
+                type="text"
+                value={newDrug.usageTime}
+                onChange={(e) => setNewDrug({ ...newDrug, usageTime: e.target.value })}
+                placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
           <div className="mt-4">
             <button
@@ -268,9 +304,12 @@ export default function DrugManagement({ userRole }) {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">غلظت دارو (میلی‌گرم بر سی‌سی)</label>
               <input
-                type="number"
+                type="text"
                 value={editingDrug.concentration}
-                onChange={(e) => setEditingDrug({ ...editingDrug, concentration: e.target.value })}
+                onChange={(e) => {
+                  const value = convertToEnglishNumbers(e.target.value); // تبدیل اعداد فارسی به انگلیسی
+                  setEditingDrug({ ...editingDrug, concentration: value });
+                }}
                 placeholder="غلظت دارو"
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
@@ -279,9 +318,12 @@ export default function DrugManagement({ userRole }) {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">تعداد نوبت‌های مصرف در شبانه‌روز</label>
               <input
-                type="number"
+                type="text"
                 value={editingDrug.dosesPerDay}
-                onChange={(e) => setEditingDrug({ ...editingDrug, dosesPerDay: e.target.value })}
+                onChange={(e) => {
+                  const value = convertToEnglishNumbers(e.target.value); // تبدیل اعداد فارسی به انگلیسی
+                  setEditingDrug({ ...editingDrug, dosesPerDay: value });
+                }}
                 placeholder="تعداد نوبت‌های مصرف در شبانه‌روز"
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
