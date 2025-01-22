@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
@@ -104,6 +105,15 @@ func main() {
 
 	log.Println("Server Running on 8080")
 	log.Fatal(http.ListenAndServe(":8080", handler))
+}
+
+// تابع کمکی برای نمایش دوزها به‌صورت یک رقم اعشار
+func formatDosages(dosages []float64) string {
+	var formattedDosages []string
+	for _, dosage := range dosages {
+		formattedDosages = append(formattedDosages, strconv.FormatFloat(dosage, 'f', 1, 64))
+	}
+	return strings.Join(formattedDosages, ", ")
 }
 
 // توابع مرتبط با داروها
@@ -244,7 +254,23 @@ func adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // سایر توابع API
 func getDrugs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(drugs)
+
+	// ساخت یک کپی از داروها با دوزهای فرمت‌شده
+	var formattedDrugs []Drug
+	for _, drug := range drugs {
+		formattedDrugs = append(formattedDrugs, Drug{
+			ID:            drug.ID,
+			Name:          drug.Name,
+			Dosages:       drug.Dosages, // دوزها به‌صورت عددی باقی می‌مانند
+			Concentration: drug.Concentration,
+			Indication:    drug.Indication,
+			UsageTime:     drug.UsageTime,
+			DosesPerDay:   drug.DosesPerDay,
+		})
+	}
+
+	// نمایش دوزها به‌صورت یک رقم اعشار
+	json.NewEncoder(w).Encode(formattedDrugs)
 }
 
 func calculateDose(w http.ResponseWriter, r *http.Request) {
@@ -269,18 +295,18 @@ func calculateDose(w http.ResponseWriter, r *http.Request) {
 				// محاسبه دوز کلی
 				totalDose := (req.Weight * selectedDosage * 5) / drug.Concentration
 
-				// رند کردن دوز کلی به عدد صحیح
-				totalDoseRounded := int(totalDose + 0.5)
+				// نمایش دوز کلی به‌صورت یک رقم اعشار
+				totalDoseFormatted := strconv.FormatFloat(totalDose, 'f', 1, 64)
 
 				// محاسبه دوز هر نوبت
 				dosePerDose := totalDose / float64(drug.DosesPerDay)
 
-				// رند کردن دوز هر نوبت به عدد صحیح
-				dosePerDoseRounded := int(dosePerDose + 0.5)
+				// نمایش دوز هر نوبت به‌صورت یک رقم اعشار
+				dosePerDoseFormatted := strconv.FormatFloat(dosePerDose, 'f', 1, 64)
 
 				results[drug.Name] = map[string]interface{}{
-					"totalDose":   totalDoseRounded,   // دوز کلی (رند شده)
-					"dosePerDose": dosePerDoseRounded, // دوز هر نوبت (رند شده)
+					"totalDose":   totalDoseFormatted,   // دوز کلی (یک رقم اعشار)
+					"dosePerDose": dosePerDoseFormatted, // دوز هر نوبت (یک رقم اعشار)
 					"usageTime":   drug.UsageTime,
 					"dosesPerDay": drug.DosesPerDay,
 				}
