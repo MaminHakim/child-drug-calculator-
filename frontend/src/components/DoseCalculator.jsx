@@ -11,9 +11,9 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedDosage, setSelectedDosage] = useState({}); // State جدید برای دوزهای انتخاب‌شده
+  const [selectedDosage, setSelectedDosage] = useState({});
 
-  // Fetch drugs from the server
+  // دریافت لیست داروها از سرور
   useEffect(() => {
     const fetchDrugs = async () => {
       try {
@@ -25,11 +25,11 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
           data.map((drug) => ({
             value: drug.id,
             label: drug.name,
-            dosages: drug.dosages, // دوزهای ممکن برای دارو
+            dosages: drug.dosages,
             concentration: drug.concentration,
             indication: drug.indication || 'بدون مورد مصرف مشخص',
             usageTime: drug.usageTime || 'بدون زمان مصرف مشخص',
-            dosesPerDay: drug.dosesPerDay, // تعداد نوبت‌های مصرف در شبانه‌روز
+            dosesPerDay: drug.dosesPerDay,
           }))
         );
         setLoading(false);
@@ -47,39 +47,37 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
     }
   }, [isLoggedIn]);
 
-  // Calculate dose when weight, selected drugs, or selected dosage changes
-  useEffect(() => {
-    const calculateDose = async () => {
-      if (weight > 0 && selectedDrugs.length > 0) {
-        try {
-          const token = localStorage.getItem('token');
-          const { data } = await axios.post(`${API_BASE_URL}/api/calculate`,
-            {
-              weight: parseFloat(weight),
-              drugIds: selectedDrugs.map((d) => d.value),
-              dosages: selectedDosage, // ارسال دوزهای انتخاب‌شده
-            },
-            {
-              headers: { Authorization: token },
-            }
-          );
-          setResults(data);
-        } catch (err) {
-          console.error('خطای محاسبه:', err);
-          setError('خطا در محاسبه دوز دارو. لطفاً دوباره تلاش کنید.');
-          if (err.response && err.response.status === 401) {
-            alert('احراز هویت نامعتبر است. لطفاً دوباره وارد شوید.');
-          }
-        }
-      } else {
-        setResults({});
-      }
-    };
-
-    if (isLoggedIn) {
-      calculateDose();
+  // محاسبه دوز داروها
+  const calculateDose = () => {
+    if (weight <= 0 || selectedDrugs.length === 0) {
+      setResults({});
+      return;
     }
-  }, [weight, selectedDrugs, selectedDosage, isLoggedIn]);
+
+    const calculatedResults = {};
+    selectedDrugs.forEach((drug) => {
+      const drugInfo = drugOptions.find((d) => d.value === drug.value);
+      if (drugInfo) {
+        const selectedDosageValue = selectedDosage[drug.value] || drugInfo.dosages[0];
+        const totalDose = (weight * selectedDosageValue * 5) / drugInfo.concentration;
+        const dosePerDose = totalDose / drugInfo.dosesPerDay;
+
+        calculatedResults[drugInfo.label] = {
+          totalDose: totalDose.toFixed(1),
+          dosePerDose: dosePerDose.toFixed(1),
+          usageTime: drugInfo.usageTime,
+          dosesPerDay: drugInfo.dosesPerDay,
+        };
+      }
+    });
+
+    setResults(calculatedResults);
+  };
+
+  // محاسبه دوز هنگام تغییر وزن، داروها یا دوز انتخاب‌شده
+  useEffect(() => {
+    calculateDose();
+  }, [weight, selectedDrugs, selectedDosage]);
 
   if (error) {
     return (
@@ -138,10 +136,9 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
               value={selectedDrugs}
               onChange={(selected) => {
                 setSelectedDrugs(selected);
-                // تنظیم دوز پیش‌فرض برای هر دارو
                 const dosageMap = {};
                 selected.forEach((drug) => {
-                  dosageMap[drug.value] = drug.dosages[0]; // دوز پیش‌فرض: اولین مقدار از دوزهای ممکن
+                  dosageMap[drug.value] = drug.dosages[0];
                 });
                 setSelectedDosage(dosageMap);
               }}

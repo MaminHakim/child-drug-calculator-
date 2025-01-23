@@ -23,6 +23,7 @@ export default function App() {
 
   // استفاده از useRef برای ذخیره‌ی مرجع به منوی آبشاری
   const dropdownRef = useRef(null);
+  const mobilemenuRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -47,6 +48,7 @@ export default function App() {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+        
       }
     };
 
@@ -55,6 +57,7 @@ export default function App() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
+
 
   const handleLogout = () => {
     localStorage.removeItem('token');
