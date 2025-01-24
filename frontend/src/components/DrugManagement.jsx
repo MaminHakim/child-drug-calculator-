@@ -5,9 +5,10 @@ import Swal from 'sweetalert2';
 import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import Modal from 'react-modal';
+import qs from 'qs';
 
 // تنظیمات اولیه برای React Modal
-Modal.setAppElement('#root'); // این خط برای دسترسی بهتر به Modal توسط screen readerها است.
+Modal.setAppElement('#root');
 
 // تابع تبدیل اعداد فارسی به انگلیسی
 const convertToEnglishNumbers = (input) => {
@@ -23,26 +24,35 @@ const convertToEnglishNumbers = (input) => {
 
 // تابع نمایش اعداد به‌صورت یک رقم اعشار
 const formatDecimal = (value) => {
-  return parseFloat(value).toFixed(1); // نمایش یک رقم اعشار
+  return parseFloat(value).toFixed(1);
+};
+
+// تابع تبدیل JSON به آرایه
+const parseJSON = (str) => {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return []; // یا هر مقدار پیش‌فرض دیگری
+  }
 };
 
 export default function DrugManagement({ userRole }) {
   const [drugs, setDrugs] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // حالت Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDrug, setNewDrug] = useState({
     name: '',
-    dosages: [10, 15, 20], // دوزهای ممکن برای دارو
+    dosages: [10],
     concentration: '',
     indication: '',
     usageTime: '',
-    dosesPerDay: 3, // تعداد نوبت‌های مصرف در شبانه‌روز
+    dosesPerDay: 3,
   });
   const [editingDrug, setEditingDrug] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false); // وضعیت لودینگ
-  const [currentPage, setCurrentPage] = useState(1); // صفحه فعلی
-  const [itemsPerPage, setItemsPerPage] = useState(10); // تعداد آیتم‌ها در هر صفحه
-  const [searchQuery, setSearchQuery] = useState(''); // عبارت جستجو
+  const [isFetching, setIsFetching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,7 +60,7 @@ export default function DrugManagement({ userRole }) {
   }, []);
 
   const fetchDrugs = async () => {
-    setIsFetching(true); // شروع لودینگ
+    setIsFetching(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -60,80 +70,76 @@ export default function DrugManagement({ userRole }) {
       const { data } = await axios.get(`${API_BASE_URL}/api/drugs`, {
         headers: { Authorization: token },
       });
-      setDrugs(data);
+
+      // تبدیل dosages و concentration به آرایه
+      const formattedData = data.map(drug => ({
+        ID: drug.ID,
+        name: drug.name,
+        dosages: parseJSON(drug.dosages), // تبدیل به آرایه
+        concentration: parseJSON(drug.concentration), // تبدیل به آرایه
+        indication: drug.indication,
+        usageTime: drug.usageTime,
+        dosesPerDay: drug.dosesPerDay
+      }));
+
+      setDrugs(formattedData);
     } catch (err) {
       console.error('خطا در دریافت داروها:', err);
       Swal.fire('خطا!', 'خطا در دریافت داروها.', 'error');
     } finally {
-      setIsFetching(false); // پایان لودینگ
+      setIsFetching(false);
     }
   };
 
-  // فیلتر کردن داروها بر اساس جستجو
   const filteredDrugs = drugs.filter((drug) =>
     drug.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // محاسبه تعداد صفحات
   const totalPages = Math.ceil(filteredDrugs.length / itemsPerPage);
 
-  // دریافت داروهای صفحه فعلی
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentDrugs = filteredDrugs.slice(indexOfFirstItem, indexOfLastItem);
 
-  // تغییر صفحه
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // تغییر تعداد آیتم‌ها در هر صفحه
   const handleItemsPerPageChange = (e) => {
     setItemsPerPage(Number(e.target.value));
-    setCurrentPage(1); // بازگشت به صفحه اول
+    setCurrentPage(1);
   };
 
-  // تابع افزودن دارو
   const handleAddDrug = async (e) => {
     e.preventDefault();
-    if (!newDrug.name || !newDrug.concentration || !newDrug.indication || !newDrug.usageTime) {
-      Swal.fire('خطا!', 'لطفاً فیلدهای اجباری را پر کنید.', 'error');
-      return;
-    }
-  
-    // تبدیل مقادیر به فرمت مورد انتظار سرور
+
     const payload = {
       name: newDrug.name,
-      dosages: newDrug.dosages.map(Number), // تبدیل به آرایه‌ی عددی
-      concentration: parseFloat(newDrug.concentration), // تبدیل به float
+      dosages: JSON.stringify(newDrug.dosages), // تبدیل به string
+      concentration: JSON.stringify([parseFloat(newDrug.concentration)]), // تبدیل به string
       indication: newDrug.indication,
       usageTime: newDrug.usageTime,
-      dosesPerDay: parseInt(newDrug.dosesPerDay), // تبدیل به عدد
+      dosesPerDay: parseInt(newDrug.dosesPerDay),
     };
-  
-    // بررسی مقادیر قبل از ارسال
-    console.log("Payload:", payload);
-  
-    setIsLoading(true); // شروع لودینگ
+
+    setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
         return;
       }
-  
+
       const response = await axios.post(`${API_BASE_URL}/api/drugs`, payload, {
         headers: {
-          Authorization: token,
-          'Content-Type': 'application/json', // اضافه کردن Content-Type
+          'Content-Type': 'application/json',
+          'Authorization': token,
         },
       });
-  
-      console.log("Response:", response.data); // بررسی پاسخ سرور
-  
-      fetchDrugs(); // دریافت مجدد لیست داروها
-      setIsModalOpen(false); // بستن Modal پس از افزودن دارو
+
+      fetchDrugs();
+      setIsModalOpen(false);
       setNewDrug({
         name: '',
-        dosages: [10, 15, 20],
+        dosages: [10],
         concentration: '',
         indication: '',
         usageTime: '',
@@ -144,42 +150,54 @@ export default function DrugManagement({ userRole }) {
       console.error('خطا در افزودن دارو:', err);
       Swal.fire('خطا!', err.response?.data?.message || 'خطا در افزودن دارو.', 'error');
     } finally {
-      setIsLoading(false); // پایان لودینگ
+      setIsLoading(false);
     }
   };
 
-  // تابع ویرایش دارو
   const handleEditDrug = async (updatedDrug) => {
-    setIsLoading(true); // شروع لودینگ
+    setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        Swal.fire('خطا!', 'توکن یافت نشد. لطفاً دوباره وارد شوید.', 'error');
+        setIsLoading(false);
+        return;
+      }
+
       const payload = {
-        id: updatedDrug.id,
+        id: updatedDrug.ID,
         name: updatedDrug.name,
-        dosages: updatedDrug.dosages.map(Number), // تبدیل به آرایه‌ی عددی
-        concentration: parseFloat(updatedDrug.concentration), // تبدیل به float
+        dosages: JSON.stringify(updatedDrug.dosages),
+        concentration: JSON.stringify([parseFloat(updatedDrug.concentration || 0)]), // اعتبارسنجی و تبدیل
         indication: updatedDrug.indication,
         usageTime: updatedDrug.usageTime,
-        dosesPerDay: parseInt(updatedDrug.dosesPerDay), // تبدیل به عدد
+        dosesPerDay: parseInt(updatedDrug.dosesPerDay || 3), // اعتبارسنجی و تبدیل
       };
-  
-      await axios.put(`${API_BASE_URL}/api/drugs/${updatedDrug.id}`, payload, {
+
+      // اعتبارسنجی مقادیر عددی
+      if (isNaN(parseFloat(updatedDrug.concentration)) || isNaN(payload.dosesPerDay)) {
+        Swal.fire('خطا!', 'مقادیر عددی نامعتبر هستند.', 'error');
+        setIsLoading(false);
+        return;
+      }
+
+      await axios.put(`${API_BASE_URL}/api/drugs/${updatedDrug.ID}`, payload, {
         headers: { Authorization: token },
       });
-  
-      fetchDrugs(); // دریافت مجدد لیست داروها
-      setEditingDrug(null); // پاک کردن حالت ویرایش
+
+      fetchDrugs();
+      setEditingDrug(null);
       Swal.fire('موفقیت‌آمیز!', 'دارو با موفقیت ویرایش شد.', 'success');
     } catch (err) {
       console.error('خطا در ویرایش دارو:', err);
       Swal.fire('خطا!', err.response?.data?.message || 'خطا در ویرایش دارو.', 'error');
     } finally {
-      setIsLoading(false); // پایان لودینگ
+      setIsLoading(false);
     }
   };
 
-  // تابع حذف دارو
   const handleDeleteDrug = async (drugId) => {
+    console.log('Deleting drug with ID:', drugId); // چاپ مقدار drugId برای دیباگ
     const result = await Swal.fire({
       title: 'آیا مطمئن هستید؟',
       text: 'این عمل قابل بازگشت نیست!',
@@ -190,21 +208,25 @@ export default function DrugManagement({ userRole }) {
       confirmButtonText: 'بله، حذف شود!',
       cancelButtonText: 'لغو',
     });
-
+  
     if (result.isConfirmed) {
-      setIsLoading(true); // شروع لودینگ
+      setIsLoading(true);
       try {
         const token = localStorage.getItem('token');
         await axios.delete(`${API_BASE_URL}/api/drugs/${drugId}`, {
           headers: { Authorization: token },
+          params: {id: drugId},
+          paramsSerializer: (params) => qs.stringify(params),
         });
-        fetchDrugs(); // دریافت مجدد لیست داروها
+
+        setDrugs(prev => prev.filter(drug => drug.ID !== drugId));
+        // fetchDrugs();
         Swal.fire('موفقیت‌آمیز!', 'دارو با موفقیت حذف شد.', 'success');
       } catch (err) {
         console.error('خطا در حذف دارو:', err);
         Swal.fire('خطا!', err.response?.data?.message || 'خطا در حذف دارو.', 'error');
       } finally {
-        setIsLoading(false); // پایان لودینگ
+        setIsLoading(false);
       }
     }
   };
@@ -213,7 +235,6 @@ export default function DrugManagement({ userRole }) {
     <div className="max-w-4xl mx-auto p-4 font-shabnam">
       <h1 className="text-2xl font-bold mb-6">مدیریت داروها</h1>
 
-      {/* نمایش لودینگ اسپینر */}
       {isFetching && (
         <div className="flex justify-center items-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -221,13 +242,11 @@ export default function DrugManagement({ userRole }) {
         </div>
       )}
 
-      {/* نمایش محتوا پس از پایان لودینگ */}
       {!isFetching && (
         <>
-          {/* دکمه افزودن دارو */}
           {userRole === 'admin' && (
             <button
-              onClick={() => setIsModalOpen(true)} // باز کردن Modal
+              onClick={() => setIsModalOpen(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg mb-6 hover:bg-blue-700"
             >
               <FiPlus className="inline-block mr-2" />
@@ -235,7 +254,6 @@ export default function DrugManagement({ userRole }) {
             </button>
           )}
 
-          {/* فیلد جستجو */}
           <div className="mb-6">
             <div className="relative">
               <input
@@ -249,7 +267,6 @@ export default function DrugManagement({ userRole }) {
             </div>
           </div>
 
-          {/* انتخاب تعداد آیتم‌ها در هر صفحه */}
           <div className="mb-4">
             <label className="text-sm font-medium text-slate-700 mr-2">تعداد در هر صفحه:</label>
             <select
@@ -264,12 +281,12 @@ export default function DrugManagement({ userRole }) {
             </select>
           </div>
 
-          {/* لیست داروها */}
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-bold mb-4">لیست داروها</h2>
             <div className="space-y-3">
               {currentDrugs.map((drug) => (
-                <div key={drug.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg">
+                // console.log('Drug Object:', drug), // چاپ اطلاعات داروها برای دیباگ
+                <div key={drug.ID} className="flex justify-between items-center p-4 bg-slate-50 rounded-lg">
                   <div>
                     <div className="text-sm font-medium">{drug.name}</div>
                     <div className="text-xs text-gray-400">
@@ -281,13 +298,13 @@ export default function DrugManagement({ userRole }) {
                   {userRole === 'admin' && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setEditingDrug(drug)} // نمایش فرم ویرایش
+                        onClick={() => setEditingDrug(drug)}
                         className="text-yellow-600 hover:text-yellow-700"
                       >
                         <FiEdit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteDrug(drug.id)} // حذف دارو
+                        onClick={() => handleDeleteDrug(drug.ID)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <FiTrash className="w-4 h-4" />
@@ -298,7 +315,6 @@ export default function DrugManagement({ userRole }) {
               ))}
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-6">
               <button
                 onClick={() => paginate(currentPage - 1)}
@@ -322,130 +338,120 @@ export default function DrugManagement({ userRole }) {
         </>
       )}
 
-      {/* Modal برای افزودن دارو */}
       <Modal
-  isOpen={isModalOpen}
-  onRequestClose={() => setIsModalOpen(false)}
-  contentLabel="افزودن دارو"
-  className="modal"
-  overlayClassName="overlay"
->
-  <h2 className="text-xl font-bold mb-4">افزودن دارو جدید</h2>
-  <form onSubmit={handleAddDrug} className="space-y-4">
-    {/* نام دارو */}
-    <input
-      type="text"
-      value={newDrug.name}
-      onChange={(e) => setNewDrug({ ...newDrug, name: e.target.value })}
-      placeholder="نام دارو"
-      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      required
-    />
-
-    {/* دوزهای ممکن */}
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">دوزهای ممکن (میلی‌گرم):</label>
-      {newDrug.dosages.map((dose, index) => (
-        <div key={index} className="flex items-center gap-2 mb-2">
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        contentLabel="افزودن دارو"
+        className="modal"
+        overlayClassName="overlay"
+      >
+        <h2 className="text-xl font-bold mb-4">افزودن دارو جدید</h2>
+        <form onSubmit={handleAddDrug} className="space-y-4">
           <input
-            type="number"
-            value={dose}
-            onChange={(e) => {
-              const updatedDosages = [...newDrug.dosages];
-              updatedDosages[index] = parseFloat(e.target.value);
-              setNewDrug({ ...newDrug, dosages: updatedDosages });
-            }}
-            placeholder="دوز"
+            type="text"
+            value={newDrug.name}
+            onChange={(e) => setNewDrug({ ...newDrug, name: e.target.value })}
+            placeholder="نام دارو"
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             required
           />
-          <button
-            type="button"
-            onClick={() => {
-              const updatedDosages = newDrug.dosages.filter((_, i) => i !== index);
-              setNewDrug({ ...newDrug, dosages: updatedDosages });
-            }}
-            className="text-red-600 hover:text-red-700"
-          >
-            حذف
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setNewDrug({ ...newDrug, dosages: [...newDrug.dosages, 0] })}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-      >
-        افزودن دوز جدید
-      </button>
-    </div>
 
-    {/* غلظت دارو */}
-    <input
-      type="number"
-      value={newDrug.concentration}
-      onChange={(e) => setNewDrug({ ...newDrug, concentration: e.target.value })}
-      placeholder="غلظت دارو"
-      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      required
-    />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">دوزهای ممکن (میلی‌گرم):</label>
+            {newDrug.dosages.map((dose, index) => (
+              <div key={index} className="flex items-center gap-2 mb-2">
+                <input
+                  type="number"
+                  value={dose}
+                  onChange={(e) => {
+                    const updatedDosages = [...newDrug.dosages];
+                    updatedDosages[index] = parseFloat(e.target.value);
+                    setNewDrug({ ...newDrug, dosages: updatedDosages });
+                  }}
+                  placeholder="دوز"
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updatedDosages = newDrug.dosages.filter((_, i) => i !== index);
+                    setNewDrug({ ...newDrug, dosages: updatedDosages });
+                  }}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  حذف
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setNewDrug({ ...newDrug, dosages: [...newDrug.dosages, 0] })}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              افزودن دوز جدید
+            </button>
+          </div>
 
-    {/* مورد مصرف */}
-    <input
-      type="text"
-      value={newDrug.indication}
-      onChange={(e) => setNewDrug({ ...newDrug, indication: e.target.value })}
-      placeholder="مورد مصرف"
-      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      required
-    />
+          <input
+            type="number"
+            value={newDrug.concentration}
+            onChange={(e) => setNewDrug({ ...newDrug, concentration: e.target.value })}
+            placeholder="غلظت دارو"
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            required
+          />
 
-    {/* زمان مصرف */}
-    <input
-      type="text"
-      value={newDrug.usageTime}
-      onChange={(e) => setNewDrug({ ...newDrug, usageTime: e.target.value })}
-      placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
-      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-      required
-    />
+          <input
+            type="text"
+            value={newDrug.indication}
+            onChange={(e) => setNewDrug({ ...newDrug, indication: e.target.value })}
+            placeholder="مورد مصرف"
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            required
+          />
 
-    {/* تعداد نوبت‌های مصرف در شبانه‌روز */}
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">تعداد نوبت‌های مصرف در شبانه‌روز:</label>
-      <input
-        type="number"
-        value={newDrug.dosesPerDay}
-        onChange={(e) => setNewDrug({ ...newDrug, dosesPerDay: parseInt(e.target.value) })}
-        placeholder="تعداد نوبت‌ها"
-        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        required
-      />
-    </div>
+          <input
+            type="text"
+            value={newDrug.usageTime}
+            onChange={(e) => setNewDrug({ ...newDrug, usageTime: e.target.value })}
+            placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            required
+          />
 
-    {/* دکمه‌های ثبت و لغو */}
-    <div className="mt-4">
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        disabled={isLoading}
-      >
-        {isLoading ? 'در حال افزودن...' : 'افزودن'}
-      </button>
-      <button
-        type="button"
-        onClick={() => setIsModalOpen(false)}
-        className="bg-gray-600 text-white px-4 py-2 rounded-lg ml-2 hover:bg-gray-700"
-      >
-        لغو
-      </button>
-    </div>
-  </form>
-</Modal>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">تعداد نوبت‌های مصرف در شبانه‌روز:</label>
+            <input
+              type="number"
+              value={newDrug.dosesPerDay}
+              onChange={(e) => setNewDrug({ ...newDrug, dosesPerDay: parseInt(e.target.value) })}
+              placeholder="تعداد نوبت‌ها"
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
 
-    
-     {/* Modal برای ویرایش دارو */}
-<Modal
+          <div className="mt-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'در حال افزودن...' : 'افزودن'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg ml-2 hover:bg-gray-700"
+            >
+              لغو
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
   isOpen={!!editingDrug}
   onRequestClose={() => setEditingDrug(null)}
   contentLabel="ویرایش دارو"
@@ -460,7 +466,7 @@ export default function DrugManagement({ userRole }) {
     }}
     className="space-y-4"
   >
-    {/* نام دارو */}
+    {/* فیلد نام دارو */}
     <input
       type="text"
       value={editingDrug?.name || ''}
@@ -470,7 +476,7 @@ export default function DrugManagement({ userRole }) {
       required
     />
 
-    {/* دوزهای ممکن */}
+    {/* فیلد دوزهای ممکن */}
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">دوزهای ممکن (میلی‌گرم):</label>
       {editingDrug?.dosages?.map((dose, index) => (
@@ -508,7 +514,7 @@ export default function DrugManagement({ userRole }) {
       </button>
     </div>
 
-    {/* غلظت دارو */}
+    {/* فیلد غلظت دارو */}
     <input
       type="number"
       value={editingDrug?.concentration || ''}
@@ -518,27 +524,27 @@ export default function DrugManagement({ userRole }) {
       required
     />
 
-    {/* مورد مصرف */}
+    {/* فیلد مورد مصرف */}
     <input
       type="text"
-      value={editingDrug?.indication || ''}
+      value={editingDrug?.indication || ''} // نمایش مقدار indication
       onChange={(e) => setEditingDrug({ ...editingDrug, indication: e.target.value })}
       placeholder="مورد مصرف"
       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
       required
     />
 
-    {/* زمان مصرف */}
+    {/* فیلد زمان مصرف */}
     <input
       type="text"
-      value={editingDrug?.usageTime || ''}
+      value={editingDrug?.usageTime || ''} // نمایش مقدار usageTime
       onChange={(e) => setEditingDrug({ ...editingDrug, usageTime: e.target.value })}
       placeholder="زمان مصرف (مثلاً هر 8 ساعت)"
       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
       required
     />
 
-    {/* تعداد نوبت‌های مصرف در شبانه‌روز */}
+    {/* فیلد تعداد نوبت‌های مصرف */}
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">تعداد نوبت‌های مصرف در شبانه‌روز:</label>
       <input
@@ -551,7 +557,7 @@ export default function DrugManagement({ userRole }) {
       />
     </div>
 
-    {/* دکمه‌های ثبت و لغو */}
+    {/* دکمه‌های ویرایش و لغو */}
     <div className="mt-4">
       <button
         type="submit"
@@ -571,7 +577,6 @@ export default function DrugManagement({ userRole }) {
   </form>
 </Modal>
 
-      {/* استایل‌های سفارشی برای Modal */}
       <style>
         {`
           .modal {

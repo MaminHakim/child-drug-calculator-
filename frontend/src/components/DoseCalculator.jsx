@@ -13,6 +13,15 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
   const [error, setError] = useState(null);
   const [selectedDosage, setSelectedDosage] = useState({});
 
+  // تابع تبدیل JSON به آرایه
+  const parseJSON = (str) => {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return []; // یا هر مقدار پیش‌فرض دیگری
+    }
+  };
+
   // دریافت لیست داروها از سرور
   useEffect(() => {
     const fetchDrugs = async () => {
@@ -21,12 +30,20 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
         const { data } = await axios.get(`${API_BASE_URL}/api/drugs`, {
           headers: { Authorization: token },
         });
+
+        // تبدیل dosages و concentration به آرایه
+        const formattedData = data.map((drug) => ({
+          ...drug,
+          dosages: parseJSON(drug.dosages), // تبدیل به آرایه
+          concentration: parseJSON(drug.concentration), // تبدیل به آرایه
+        }));
+
         setDrugOptions(
-          data.map((drug) => ({
+          formattedData.map((drug) => ({
             value: drug.id,
             label: drug.name,
             dosages: drug.dosages,
-            concentration: drug.concentration,
+            concentration: drug.concentration[0], // استفاده از اولین مقدار آرایه
             indication: drug.indication || 'بدون مورد مصرف مشخص',
             usageTime: drug.usageTime || 'بدون زمان مصرف مشخص',
             dosesPerDay: drug.dosesPerDay,
@@ -35,10 +52,16 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
         setLoading(false);
       } catch (err) {
         console.error('خطا در دریافت داروها:', err);
-        setError('خطا در دریافت داروها. لطفاً دوباره تلاش کنید.');
-        if (err.response && err.response.status === 401) {
-          alert('احراز هویت نامعتبر است. لطفاً دوباره وارد شوید.');
+        if (err.response) {
+          if (err.response.status === 401) {
+            setError('احراز هویت نامعتبر است. لطفاً دوباره وارد شوید.');
+          } else {
+            setError('خطا در دریافت داروها. لطفاً دوباره تلاش کنید.');
+          }
+        } else {
+          setError('خطا در اتصال به سرور. لطفاً اتصال اینترنت خود را بررسی کنید.');
         }
+        setLoading(false);
       }
     };
 
@@ -49,7 +72,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
 
   // محاسبه دوز داروها
   const calculateDose = () => {
-    if (weight <= 0 || selectedDrugs.length === 0) {
+    if (weight <= 0 || isNaN(weight) || selectedDrugs.length === 0) {
       setResults({});
       return;
     }
@@ -76,7 +99,11 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
 
   // محاسبه دوز هنگام تغییر وزن، داروها یا دوز انتخاب‌شده
   useEffect(() => {
-    calculateDose();
+    if (weight > 0 && selectedDrugs.length > 0) {
+      calculateDose();
+    } else {
+      setResults({});
+    }
   }, [weight, selectedDrugs, selectedDosage]);
 
   if (error) {
@@ -112,7 +139,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
               value={weight}
               onChange={(e) => {
                 const value = e.target.value;
-                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+                if (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0) {
                   setWeight(value);
                 }
               }}
@@ -138,7 +165,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
                 setSelectedDrugs(selected);
                 const dosageMap = {};
                 selected.forEach((drug) => {
-                  dosageMap[drug.value] = drug.dosages[0];
+                  dosageMap[drug.value] = selectedDosage[drug.value] || drug.dosages[0];
                 });
                 setSelectedDosage(dosageMap);
               }}
@@ -163,6 +190,11 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
                   boxShadow: 'none',
                   minHeight: '48px',
                   backgroundColor: '#f8fafc',
+                }),
+                menu: (base) => ({
+                  ...base,
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
                 }),
               }}
             />
