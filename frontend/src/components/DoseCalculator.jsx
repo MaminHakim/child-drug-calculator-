@@ -40,7 +40,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
 
         setDrugOptions(
           formattedData.map((drug) => ({
-            value: drug.id,
+            value: drug.ID,
             label: drug.name,
             dosages: drug.dosages,
             concentration: drug.concentration[0], // استفاده از اولین مقدار آرایه
@@ -86,8 +86,8 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
         const dosePerDose = totalDose / drugInfo.dosesPerDay;
 
         calculatedResults[drugInfo.label] = {
-          totalDose: totalDose.toFixed(1),
-          dosePerDose: dosePerDose.toFixed(1),
+          totalDose: totalDose.toFixed(0),
+          dosePerDose: dosePerDose.toFixed(0),
           usageTime: drugInfo.usageTime,
           dosesPerDay: drugInfo.dosesPerDay,
         };
