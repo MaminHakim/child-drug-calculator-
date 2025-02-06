@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'My Awesome PWA',
-        short_name: 'MyApp',
+        name: 'Med4Kids',
+        short_name: 'Med4Kids',
         theme_color: '#ffffff',
         icons: [
           {
