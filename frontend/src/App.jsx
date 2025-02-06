@@ -100,7 +100,7 @@ export default function App() {
               {/* سمت راست - لوگو و لینک‌ها */}
               <div className="flex items-center gap-8">
                 <Link to="/" className="flex items-center gap-2 group">
-                <img src="/src/icons/64.png" alt="Med4Kids" />
+                <img src="icons/64.png" alt="Med4Kids" />
                   {/* آیکون ترکیبی */}
                   {/* <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-r from-indigo-600 to-blue-500 rounded-full group-hover:rotate-12 transition-transform">
                     <FaCalculator className="w-5 h-5 text-white absolute" />

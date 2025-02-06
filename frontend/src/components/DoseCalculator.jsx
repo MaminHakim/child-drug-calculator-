@@ -123,7 +123,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
         {/* Header */}
         <div className="mb-8 self-center">
           <div className="flex justify-center gap-2">
-          <img src="/icons/64.png" alt="" className='item-center'/>
+          <img src="icons/100.png" alt="" className='item-center'/>
             {/* <FiDroplet className="w-8 h-8 text-blue-600" /> */}
             <div className='justify-item-start content-center'>
             <h1 className="text-2xl font-bold text-slate-800">Med4Kids</h1>
