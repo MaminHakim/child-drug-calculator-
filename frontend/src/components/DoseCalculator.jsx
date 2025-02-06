@@ -121,10 +121,15 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
     <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-2 mb-3">
-            <FiDroplet className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-800">محاسبه دارو کودکان</h1>
+        <div className="mb-8 self-center">
+          <div className="flex justify-center gap-2">
+          <img src="./src/icons/64.png" alt="" className='item-center'/>
+            {/* <FiDroplet className="w-8 h-8 text-blue-600" /> */}
+            <div className='justify-item-start content-center'>
+            <h1 className="text-2xl font-bold text-slate-800">Med4Kids</h1>
+            <h4 className='text-sm'> محاسبه دوز داروی کودکان</h4>
+
+            </div>
           </div>
         </div>
 
