@@ -126,7 +126,7 @@ export default function DoseCalculator({ isLoggedIn, userRole }) {
           <img src="icons/100.png" alt="" className='item-center'/>
             {/* <FiDroplet className="w-8 h-8 text-blue-600" /> */}
             <div className='justify-item-start content-center'>
-            <h1 className="text-2xl font-bold text-slate-800">Med4Kids</h1>
+            <h1 className="text-2xl font-bold text-slate-800 m4k">Med4Kids</h1>
             <h4 className='text-sm'> محاسبه دوز داروی کودکان</h4>
 
             </div>

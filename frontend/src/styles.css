@@ -12,7 +12,9 @@
 body {
   font-family: 'Shabnam', sans-serif;
 }
-
+m4k {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif
+}
 @layer components {
   .react-select-container .react-select__control {
     @apply bg-slate-50 border-0 rounded-lg shadow-sm;
