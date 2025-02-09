@@ -12,7 +12,7 @@
 body{
   font-family: 'Shabnam', sans-serif;
 }
-m4k {
+h1.m4k {
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif !important;
 }
 @layer components {
