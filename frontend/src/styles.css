@@ -9,11 +9,11 @@
   font-weight: normal;
   font-style: normal;
 }
-h4, h5, h6, p{
+body{
   font-family: 'Shabnam', sans-serif;
 }
 m4k {
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif !important;
 }
 @layer components {
   .react-select-container .react-select__control {
